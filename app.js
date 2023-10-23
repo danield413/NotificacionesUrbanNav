@@ -2,6 +2,7 @@ const express = require('express');
 const sgMail = require('@sendgrid/mail');
 require('dotenv').config();
 const cors = require('cors');
+const AWS = require('aws-sdk');
 
 const corsOptions = {
     origin: 'http://localhost:8080', // Especifica el dominio permitido (reemplaza con tu dominio)
@@ -15,11 +16,34 @@ const port = 8080;
 app.use(cors(corsOptions));
 app.use(express.json());
 
-console.log(process.env.SENDGRID_API_KEY)
+AWS.config.update({
+    accessKeyId: 'AKIA4DHVKFTNFJDVCBYY',
+    secretAccessKey: '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',
+    region: 'us-east-2' // Cambia al región deseada
+});
+
+const sns = new AWS.SNS();
+
+app.post('/enviar-sms', (req, res) => {
+    const params = {
+      Message: 'Este es un mensaje de prueba desde Express y AWS SNS.',
+      PhoneNumber: '+573132360531' // Reemplaza con el número de teléfono de destino
+    };
+  
+    sns.publish(params, (err, data) => {
+      if (err) {
+        console.error('Error al enviar el mensaje de texto:', err);
+        res.status(500).json({ error: 'Error al enviar el mensaje de texto' });
+      } else {
+        console.log('Mensaje de texto enviado con éxito:', data);
+        res.json({ message: 'Mensaje de texto enviado con éxito' });
+      }
+    });
+  });
+
 
 // Configura la clave de API de SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 
 // Ruta para enviar un correo electrónico
 app.post('/enviar-correo', async (req, res) => {
