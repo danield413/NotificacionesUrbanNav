@@ -1,6 +1,8 @@
 const express = require('express');
 const sgMail = require('@sendgrid/mail');
-require('dotenv').config();
+require('dotenv').config({
+    path: 'sendgrid.env'
+});
 const cors = require('cors');
 const AWS = require('aws-sdk');
 
@@ -17,8 +19,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 AWS.config.update({
-    accessKeyId: 'AKIA4DHVKFTNFJDVCBYY',
-    secretAccessKey: '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',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_ID,
     region: 'us-east-2' // Cambia al región deseada
 });
 
@@ -26,56 +28,60 @@ const sns = new AWS.SNS();
 
 app.post('/enviar-sms', (req, res) => {
     const params = {
-      Message: 'Este es un mensaje de prueba desde Express y AWS SNS.',
-      PhoneNumber: '+573132360531' // Reemplaza con el número de teléfono de destino
+        Message: req.body.message,
+        PhoneNumber: req.body.number // Reemplaza con el número de teléfono de destino
     };
-  
+
     sns.publish(params, (err, data) => {
-      if (err) {
-        console.error('Error al enviar el mensaje de texto:', err);
-        res.status(500).json({ error: 'Error al enviar el mensaje de texto' });
-      } else {
-        console.log('Mensaje de texto enviado con éxito:', data);
-        res.json({ message: 'Mensaje de texto enviado con éxito' });
-      }
+        if (err) {
+            console.error('Error al enviar el mensaje de texto:', err);
+            res.status(500).json({
+                error: 'Error al enviar el mensaje de texto'
+            });
+        } else {
+            console.log('Mensaje de texto enviado con éxito:', data);
+            res.json({
+                message: 'Mensaje de texto enviado con éxito'
+            });
+        }
     });
-  });
+});
 
 
 // Configura la clave de API de SendGrid
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Ruta para enviar un correo electrónico
+//* ENVIAR CORREO
 app.post('/enviar-correo', async (req, res) => {
 
-    const {
-        to,
-        subject,
-        text,
-        html
-    } = req.body;
+    const data = req.body;
+
 
     const msg = {
-        to,
-        from: 'daniel.diaz23622@ucaldas.edu.co',
-        subject,
-        text,
-        html,
+        to: data.to,
+        from: process.env.CORREO_ORIGEN,
+        templateId: process.env.TEMPLATE_ID,
+        dynamic_template_data: {
+            name: data.name,
+            content: `<h2>${data.content}</h2>`,
+            subject: `${data.subject} 😎🚙 - UrbanNav UC`
+        }
     };
+
 
     sgMail
         .send(msg)
         .then(() => {
             res.status(200).json({
-                message: `Correo enviado satisfactoriamente a ${to}`,
                 ok: true,
+                message: "Correo enviado satisfactoriamente"
             });
             console.log('Email sent')
         })
         .catch((error) => {
             res.send('Error al enviar correo')
             res.status(500).json({
-                message: `Falló el envío de correo a ${to}`,
+                message: `UPS, falló el envío de correo...`,
                 ok: false,
                 error,
             });
