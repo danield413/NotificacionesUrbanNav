@@ -28,9 +28,11 @@ const sns = new AWS.SNS();
 
 app.post('/enviar-sms', (req, res) => {
     const params = {
-        Message: req.body.message,
-        PhoneNumber: req.body.number // Reemplaza con el número de teléfono de destino
+        Message: req.body.Message,
+        PhoneNumber: req.body.PhoneNumber // Reemplaza con el número de teléfono de destino
     };
+
+    console.log(params)
 
     sns.publish(params, (err, data) => {
         if (err) {
