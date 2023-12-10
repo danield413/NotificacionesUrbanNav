@@ -7,7 +7,11 @@ const cors = require('cors');
 const AWS = require('aws-sdk');
 
 const corsOptions = {
-    origin: 'http://localhost:8080', // Especifica el dominio permitido (reemplaza con tu dominio)
+    origin: [
+        'http://localhost:3002',
+        'http://localhost:8080',
+        
+    ], // Especifica el dominio permitido (reemplaza con tu dominio)
     methods: 'GET,PUT,POST,DELETE', // Especifica los métodos HTTP permitidos
 };
 
